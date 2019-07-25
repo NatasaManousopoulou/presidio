@@ -12,8 +12,10 @@ import (
 //Analyze text
 func Analyze(ctx context.Context, api *store.API, analyzeAPIRequest *types.AnalyzeApiRequest, project string) ([]*types.AnalyzeResult, error) {
 
-	if analyzeAPIRequest.AnalyzeTemplateId == "" && analyzeAPIRequest.AnalyzeTemplate == nil {
+	if analyzeAPIRequest.AnalyzeTemplateId == "" && IsEmptyTemplate(analyzeAPIRequest.AnalyzeTemplate) {
 		return nil, fmt.Errorf("Analyze template is missing or empty")
+	} else if analyzeAPIRequest.AnalyzeTemplateId != "" && analyzeAPIRequest.AnalyzeTemplateId != nil && !IsEmptyTemplate(analyzeAPIRequest.AnalyzeTemplate) {
+		return nil, fmt.Errorf("Both template id and template supplied")			
 	} else if analyzeAPIRequest.AnalyzeTemplate == nil {
 		analyzeAPIRequest.AnalyzeTemplate = &types.AnalyzeTemplate{}
 	}
@@ -32,4 +34,22 @@ func Analyze(ctx context.Context, api *store.API, analyzeAPIRequest *types.Analy
 	}
 	return res, err
 
+}
+
+// Breaking down the check for an empty template to accomodate the complex logic of
+// checking AllFields and trivial object setup with nil or empty Fields arrays 
+// and make it readable.
+// Not going deeper than checking for an empty Fields array; a proper check would also
+// verify that at least one Fields entry has content.
+func IsEmptyTemplate(template *types.AnalyzeTemplate) bool
+{
+	if template == nil {
+		return true
+	}
+	else if template.AllFields {
+		return false
+	}
+	else {
+		return template.Fields == nil || len(template.Fields) == 0
+	}
 }

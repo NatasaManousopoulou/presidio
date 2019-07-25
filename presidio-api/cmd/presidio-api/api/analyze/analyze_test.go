@@ -62,6 +62,26 @@ func TestAnalyzeWithTemplateStruct(t *testing.T) {
 	assert.Equal(t, 2, len(results))
 }
 
+func TestAnalyzeWithBothIdAndStruct(t *testing.T) {
+	api := setupMockServices()
+
+	project := "tests"
+	analyzeAPIRequest := &types.AnalyzeApiRequest {
+		Text: "My number is (555) 253-0000 and email johnsnow@foo.com",
+		AnalyzeTemplate: &types.AnalyzeTemplate {
+			Fields: []*types.FieldTypes {
+				{ 
+					Name: types.FieldTypesEnum_PHONE_NUMBER.String(), 
+				},
+			},
+		},
+		AnalyzeTemplateId: "test",
+	}
+
+	_, err := Analyze(context.Background(), api, analyzeAPIRequest, project)
+	assert.Error(t, err)
+}
+
 func TestAnalyzeWithNoTemplate(t *testing.T) {
 
 	api := setupMockServices()
