@@ -1,7 +1,8 @@
-registry: presidio.azurecr.io
-
+registry: mcr.microsoft.com
+ 
 # Image pull secret
 #privateRegistry: acr-auth
+tag: latest
 
 redis:
     url: redis-master.presidio-system.svc.cluster.local:6379
@@ -9,14 +10,19 @@ redis:
     #db: 0
     #ssl: false
 
+# Update url with the internal redis url, phase 2
+redis_internal:
+    nameOverride: persistent-redis
+    url: redis-master.presidio-system.svc.cluster.local:6379
+
 api:
   name: presidio-api
-  # tag:
   imagePullPolicy: Always
   service:
     type: ClusterIP
     externalPort: 8080
     internalPort: 8080
+    name: http
   # Configure liveness probes except `httpGet` and the belongings
   #livenessProbe:
   #  initialDelaySeconds: 20
@@ -30,44 +36,62 @@ api:
 
 analyzer:
   name: presidio-analyzer
-  # tag: 
   imagePullPolicy: Always
   service:
     type: ClusterIP
     externalPort: 3001
     internalPort: 3001
+    name: grpc
 
 anonymizer:
   name: presidio-anonymizer
-  # tag:
   imagePullPolicy: Always
   service:
     type: ClusterIP
     externalPort: 3001
     internalPort: 3001
+    name: grpc
 
 anonymizerimage:
   name: presidio-anonymizer-image
-  # tag:
   imagePullPolicy: Always
   service:
     type: ClusterIP
     externalPort: 3001
     internalPort: 3001
+    name: grpc
 
 ocr:
   name: presidio-ocr
-  # tag:
   imagePullPolicy: Always
   service:
     type: ClusterIP
     externalPort: 3001
     internalPort: 3001
+    name: grpc
 
 scheduler:
   name: presidio-scheduler
   imagePullPolicy: Always
-  # tag:
+  service:
+    type: ClusterIP
+    externalPort: 3001
+    internalPort: 3001
+    name: grpc
+  
+recognizersstore:
+  name: presidio-recognizers-store
+  imagePullPolicy: Always
+  service:
+    type: ClusterIP
+    externalPort: 3004
+    internalPort: 3004
+    name: grpc
+
+tester:
+  enabled: false
+  name: presidio-tester
+  imagePullPolicy: Always
   service:
     type: ClusterIP
     externalPort: 3001
@@ -76,9 +100,7 @@ scheduler:
 collector:
   name: presidio-collector
   imagePullPolicy: Always
-  # tag:
 
 datasink:
   name: presidio-datasink
   imagePullPolicy: Always
-  # tag:

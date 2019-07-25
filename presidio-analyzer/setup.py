@@ -1,9 +1,6 @@
 import setuptools
 import os.path
 
-# with open(os.path.dirname(os.path.abspath(__file__)) + '/../README.MD', "r") as fh:
-#     long_description = fh.read()
-
 setuptools.setup(
     name="presidio_analyzer",
     version="0.1.0",
@@ -14,12 +11,11 @@ setuptools.setup(
     # long_description_content_type="text/markdown",
     url="https://github.com/Microsoft/presidio",
     packages=[
-        'analyzer', 'analyzer.field_types', 'analyzer.field_types.us',
-        'analyzer.field_types.globally'
+        'analyzer', 'analyzer.predefined_recognizers'
     ],
     install_requires=[
         'grpcio>=1.13.0', 'cython>=0.28.5', 'protobuf>=3.6.0',
-        'tldextract>=2.2.0', 'knack>=0.4.2', 'spacy>=2.0.18'
+        'tldextract>=2.2.0', 'knack>=0.4.2', 'spacy>=2.1.3'
     ],
     include_package_data=True,
     license='MIT',

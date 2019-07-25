@@ -1,11 +1,11 @@
+# pylint: disable=wrong-import-position,wrong-import-order
 import logging
-import matcher
 import grpc
 import analyze_pb2
 import analyze_pb2_grpc
 from concurrent import futures
 import time
-import sys
+from os import sys, path
 import os
 from google.protobuf.json_format import MessageToJson
 from knack import CLI
@@ -13,6 +13,11 @@ from knack.arguments import ArgumentsContext
 from knack.commands import CLICommandsLoader, CommandGroup
 from knack.help import CLIHelp
 from knack.help_files import helps
+
+# bug #602: Fix imports issue in python
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+
+from analyzer_engine import AnalyzerEngine # noqa
 
 WELCOME_MESSAGE = r"""
 
@@ -27,7 +32,7 @@ WELCOME_MESSAGE = r"""
 
 """
 
-cli_name = "presidio-analyzer"
+CLI_NAME = "presidio-analyzer"
 
 helps['serve'] = """
     short-summary: Create a GRPC server
@@ -53,30 +58,20 @@ class PresidioCLIHelp(CLIHelp):
             welcome_message=WELCOME_MESSAGE)
 
 
-class Analyzer(analyze_pb2_grpc.AnalyzeServiceServicer):
-    def __init__(self):
-        self.match = matcher.Matcher()
-
-    def Apply(self, request, context):
-        response = analyze_pb2.AnalyzeResponse()
-        results = self.match.analyze_text(request.text,
-                                          request.analyzeTemplate.fields)
-        response.analyzeResults.extend(results)
-        return response
-
-
 def serve_command_handler(env_grpc_port=False, grpc_port=3000):
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    analyze_pb2_grpc.add_AnalyzeServiceServicer_to_server(Analyzer(), server)
+
+    analyze_pb2_grpc.add_AnalyzeServiceServicer_to_server(
+        AnalyzerEngine(), server)
 
     if env_grpc_port:
         port = os.environ.get('GRPC_PORT')
-        if port is not None or port is not '':
+        if port is not None or port != '':
             grpc_port = int(port)
 
     server.add_insecure_port('[::]:' + str(grpc_port))
-    logging.info("Starting GRPC listener at port " + str(grpc_port))
+    logging.info("Starting GRPC listener at port %d", grpc_port)
     server.start()
     try:
         while True:
@@ -89,7 +84,7 @@ def analyze_command_handler(text, fields, env_grpc_port=False, grpc_port=3001):
 
     if env_grpc_port:
         port = os.environ.get('GRPC_PORT')
-        if port is not None or port is not '':
+        if port is not None or port != '':
             grpc_port = int(port)
 
     channel = grpc.insecure_channel('localhost:' + str(grpc_port))
@@ -97,6 +92,7 @@ def analyze_command_handler(text, fields, env_grpc_port=False, grpc_port=3001):
     request = analyze_pb2.AnalyzeRequest()
     request.text = text
 
+    # pylint: disable=no-member
     for field_name in fields:
         field_type = request.analyzeTemplate.fields.add()
         field_type.name = field_name
@@ -107,7 +103,7 @@ def analyze_command_handler(text, fields, env_grpc_port=False, grpc_port=3001):
 class CommandsLoader(CLICommandsLoader):
     def load_command_table(self, args):
         with CommandGroup(self, '', '__main__#{}') as g:
-            g.command('serve', 'serve_command_handler', confirmation=False),
+            g.command('serve', 'serve_command_handler', confirmation=False)
             g.command('analyze', 'analyze_command_handler', confirmation=False)
         return super(CommandsLoader, self).load_command_table(args)
 
@@ -124,9 +120,9 @@ class CommandsLoader(CLICommandsLoader):
 
 
 presidio_cli = CLI(
-    cli_name=cli_name,
-    config_dir=os.path.join('~', '.{}'.format(cli_name)),
-    config_env_var_prefix=cli_name,
+    cli_name=CLI_NAME,
+    config_dir=os.path.join('~', '.{}'.format(CLI_NAME)),
+    config_env_var_prefix=CLI_NAME,
     commands_loader_cls=CommandsLoader,
     help_cls=PresidioCLIHelp)
 exit_code = presidio_cli.invoke(sys.argv[1:])

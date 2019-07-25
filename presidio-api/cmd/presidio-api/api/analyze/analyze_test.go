@@ -74,3 +74,33 @@ func TestAnalyzeWithNoTemplate(t *testing.T) {
 	assert.Error(t, err)
 
 }
+
+func TestLanguageCode(t *testing.T) {
+
+	api := setupMockServices()
+
+	project := "tests"
+	analyzeAPIRequest := &types.AnalyzeApiRequest{
+		Text:              "My number is (555) 253-0000 and email johnsnow@foo.com",
+		AnalyzeTemplateId: "test",
+		AnalyzeTemplate:   &types.AnalyzeTemplate{},
+	}
+	Analyze(context.Background(), api, analyzeAPIRequest, project)
+	assert.Equal(t, "langtest", analyzeAPIRequest.AnalyzeTemplate.Language)
+}
+
+func TestAllFields(t *testing.T) {
+
+	api := setupMockServices()
+
+	project := "tests"
+	analyzeAPIRequest := &types.AnalyzeApiRequest{
+		Text: "My number is (555) 253-0000 and email johnsnow@foo.com",
+		AnalyzeTemplate: &types.AnalyzeTemplate{
+			Language:  "en",
+			AllFields: true},
+	}
+	results, err := Analyze(context.Background(), api, analyzeAPIRequest, project)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(results))
+}
